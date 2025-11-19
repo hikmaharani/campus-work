@@ -14,39 +14,34 @@ const Chat = () => {
   const [messageInput, setMessageInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
+  const loadChats = () => {
+    if (!user) return;
+    const dbChatsStr = localStorage.getItem('campuswork_db_chats');
+    if (dbChatsStr) {
+        const dbChats: ChatThread[] = JSON.parse(dbChatsStr);
+        // Filter chats where current user is participant
+        const myChats = dbChats.filter(c => c.participants.includes(user.id));
+        // Sort by last timestamp
+        myChats.sort((a, b) => b.lastTimestamp - a.lastTimestamp);
+        setChats(myChats);
+    }
+  };
+
   // Load chats from localStorage on mount
   useEffect(() => {
-      if (!user) return;
-
-      const loadChats = () => {
-          const dbChatsStr = localStorage.getItem('campuswork_db_chats');
-          if (dbChatsStr) {
-              const dbChats: ChatThread[] = JSON.parse(dbChatsStr);
-              // Filter chats where current user is participant
-              const myChats = dbChats.filter(c => c.participants.includes(user.id));
-              // Sort by last timestamp
-              myChats.sort((a, b) => b.lastTimestamp - a.lastTimestamp);
-              setChats(myChats);
-          }
-      };
-
       loadChats();
 
       // Check if we navigated here with a specific chat to open
       const passedChatId = location.state?.activeChatId;
       if (passedChatId) {
           setActiveChatId(passedChatId);
-      } else {
-          // If no specific chat and we have chats, open the first one
-          // We do this inside loadChats usually but state updates are async
-          // Rely on effect below for auto-select if needed
       }
 
       // Poll for new messages (Simple simulation of real-time)
       const interval = setInterval(loadChats, 2000);
       return () => clearInterval(interval);
 
-  }, [user, location.state]);
+  }, [user, location.state]); // Re-run if location.state changes (e.g., navigating from ServiceDetail)
 
   const activeChat = chats.find(c => c.id === activeChatId);
 

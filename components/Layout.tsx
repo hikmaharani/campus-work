@@ -1,12 +1,12 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Calendar, MessageSquare, User, Briefcase, Bell, LogOut, Menu, X } from 'lucide-react';
+import { Home, Calendar, MessageSquare, User, Briefcase, Bell, LogOut, Menu, X, Repeat } from 'lucide-react';
 import { useApp } from '../App';
 import { Role } from '../types';
 import { Button } from './UI';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, notifications, logout } = useApp();
+  const { user, activeRole, switchRole, notifications, logout } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
@@ -85,13 +85,14 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   }
 
   // --- AUTHENTICATED LAYOUT (Sidebar style) ---
-  const isFreelancer = user.role === Role.FREELANCER || user.role === Role.BOTH;
+  // Use activeRole to determine navigation items
+  const isFreelancerView = activeRole === Role.FREELANCER;
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   const navItems = [
     { icon: Home, label: 'Home', path: '/dashboard' },
     { icon: Calendar, label: 'Bookings', path: '/bookings' },
-    ...(isFreelancer ? [{ icon: Briefcase, label: 'Services', path: '/dashboard' }] : []), 
+    ...(isFreelancerView ? [{ icon: Briefcase, label: 'Services', path: '/dashboard' }] : []), 
     { icon: MessageSquare, label: 'Inbox', path: '/chat' },
     { icon: User, label: 'Profile', path: '/profile' },
   ];
@@ -156,10 +157,22 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                     <img src={user.avatarUrl} alt="User" className="w-10 h-10 rounded-full mr-3 object-cover border border-gray-200" />
                     <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-gray-900 truncate font-heading">{user.name}</p>
-                        <p className="text-xs text-gray-500 capitalize truncate">{user.role.toLowerCase()}</p>
+                        <p className="text-xs text-gray-500 capitalize truncate">{activeRole.toLowerCase()}</p>
                     </div>
                 </div>
             )}
+
+            {/* Switch Role Button for BOTH users */}
+            {user?.role === Role.BOTH && (
+                <button 
+                    onClick={switchRole}
+                    className="w-full flex items-center px-4 py-3 rounded-xl text-secondary bg-yellow-50 border border-yellow-100 hover:bg-yellow-100 transition-colors font-medium mb-2"
+                >
+                    <Repeat className="w-5 h-5 mr-3" />
+                    Switch to {activeRole === Role.CLIENT ? 'Freelancer' : 'Client'}
+                </button>
+            )}
+
             <button 
                 onClick={handleLogout}
                 className="w-full flex items-center px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-colors font-medium"
@@ -209,6 +222,16 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               </button>
             );
           })}
+          {/* Mobile Switch Role */}
+          {user?.role === Role.BOTH && (
+             <button
+             onClick={switchRole}
+             className="flex flex-col items-center justify-center w-full py-3 text-gray-400 hover:text-secondary"
+           >
+             <Repeat className="w-6 h-6 mb-1" strokeWidth={2} />
+             <span className="text-[10px] font-medium font-heading">Switch</span>
+           </button>
+          )}
         </div>
       </nav>
     </div>

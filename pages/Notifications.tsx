@@ -1,10 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../App';
-import { Bell, Check, Trash2 } from 'lucide-react';
-import { Button } from '../components/UI';
+import { Bell, Check, Trash2, Calendar } from 'lucide-react';
+import { Button, Modal } from '../components/UI';
+import { Notification } from '../types';
 
 const Notifications = () => {
   const { notifications, markAsRead, markAllAsRead } = useApp();
+  const [selectedNotif, setSelectedNotif] = useState<Notification | null>(null);
+
+  const handleNotificationClick = (n: Notification) => {
+      markAsRead(n.id);
+      setSelectedNotif(n);
+  };
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -23,7 +30,7 @@ const Notifications = () => {
                     {notifications.map((n) => (
                         <div 
                             key={n.id} 
-                            onClick={() => markAsRead(n.id)}
+                            onClick={() => handleNotificationClick(n)}
                             className={`p-5 flex gap-4 hover:bg-gray-50 transition-colors cursor-pointer ${!n.isRead ? 'bg-blue-50/40' : ''}`}
                         >
                             <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${!n.isRead ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
@@ -34,7 +41,7 @@ const Notifications = () => {
                                     <h4 className={`text-sm font-semibold ${!n.isRead ? 'text-gray-900' : 'text-gray-600'}`}>{n.title}</h4>
                                     <span className="text-xs text-gray-400 whitespace-nowrap ml-2">{n.date}</span>
                                 </div>
-                                <p className={`text-sm ${!n.isRead ? 'text-gray-800' : 'text-gray-500'}`}>{n.message}</p>
+                                <p className={`text-sm line-clamp-2 ${!n.isRead ? 'text-gray-800' : 'text-gray-500'}`}>{n.message}</p>
                             </div>
                             {!n.isRead && (
                                 <div className="flex items-center">
@@ -53,6 +60,27 @@ const Notifications = () => {
                 </div>
             )}
         </div>
+
+        {/* Detail Modal */}
+        <Modal 
+            isOpen={!!selectedNotif}
+            onClose={() => setSelectedNotif(null)}
+            title="Detail Notifikasi"
+            footer={<Button onClick={() => setSelectedNotif(null)}>Tutup</Button>}
+        >
+            {selectedNotif && (
+                <div className="space-y-4">
+                    <div className="flex items-center text-xs text-gray-500 mb-2">
+                        <Calendar className="w-3 h-3 mr-1" />
+                        {selectedNotif.date}
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">{selectedNotif.title}</h3>
+                    <div className="p-4 bg-gray-50 rounded-xl text-gray-700 leading-relaxed">
+                        {selectedNotif.message}
+                    </div>
+                </div>
+            )}
+        </Modal>
     </div>
   );
 };

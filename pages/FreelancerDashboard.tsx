@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useApp } from '../App';
 import { Button, Modal, Input } from '../components/UI';
-import { Plus, DollarSign, Star, Briefcase, TrendingUp, AlertCircle, Upload, Check, Edit3, Trash2 } from 'lucide-react';
+import { Plus, DollarSign, Star, Briefcase, TrendingUp, AlertCircle, Upload, Check, Edit3, Trash2, X } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { MOCK_SERVICES } from '../constants';
 
@@ -13,21 +13,22 @@ const FreelancerDashboard = () => {
   const [withdrawLoading, setWithdrawLoading] = useState(false);
 
   // Edit Service State
-  const [myServices, setMyServices] = useState(MOCK_SERVICES.slice(0, 2)); // Mock user's services
+  const [myServices, setMyServices] = useState(MOCK_SERVICES.slice(0, 2)); // In real app, fetch from backend
   const [editServiceData, setEditServiceData] = useState<any>(null);
 
   // Add Service States
-  const [newService, setNewService] = useState({ title: '', category: 'Academic', price: '', description: '' });
+  const [newService, setNewService] = useState({ title: '', category: 'Academic', price: '', description: '', imageUrl: '' });
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Mock Data for Charts
+  // Mock Data for Charts (Static visualization only, but values are 0 if no real data)
   const earningsData = [
-    { name: 'Mon', income: 50000 },
-    { name: 'Tue', income: 120000 },
-    { name: 'Wed', income: 75000 },
-    { name: 'Thu', income: 0 },
-    { name: 'Fri', income: 200000 },
-    { name: 'Sat', income: 150000 },
-    { name: 'Sun', income: 100000 },
+    { name: 'Sn', income: 0 },
+    { name: 'Sl', income: 0 },
+    { name: 'Rb', income: 0 },
+    { name: 'Km', income: 0 },
+    { name: 'Jm', income: 0 },
+    { name: 'Sb', income: 0 },
+    { name: 'Mg', income: 0 },
   ];
 
   const handleWithdraw = () => {
@@ -44,22 +45,45 @@ const FreelancerDashboard = () => {
     }
 
     setWithdrawLoading(true);
-    // Simulate API call
     setTimeout(() => {
         // 1. Update Balance
-        updateUser({ balance: user.balance - amount });
+        const newBalance = user.balance - amount;
+        updateUser({ balance: newBalance });
         
-        // 2. Add Notification
+        // 2. Save transaction to localStorage (for Profile history)
+        const historyItem = {
+            id: `TRX-${Math.random().toString(36).substr(2, 6)}`.toUpperCase(),
+            action: 'Penarikan Dana',
+            detail: `Ke Rekening Utama`,
+            amount: -amount,
+            date: new Date().toLocaleDateString('id-ID'),
+            status: 'Berhasil'
+        };
+        
+        const storedHistory = localStorage.getItem('campuswork_history');
+        const history = storedHistory ? JSON.parse(storedHistory) : [];
+        history.unshift(historyItem);
+        localStorage.setItem('campuswork_history', JSON.stringify(history));
+
+        // 3. Add Notification
         addNotification({
-            title: 'Permintaan Penarikan Dana',
-            message: `Permintaan penarikan sebesar Rp ${amount.toLocaleString()} sedang diproses.`,
+            title: 'Penarikan Berhasil',
+            message: `Dana sebesar Rp ${amount.toLocaleString()} telah berhasil ditarik dari saldo Anda.`,
         });
 
-        showToast('Permintaan Penarikan Dana Berhasil!', 'success');
+        showToast('Penarikan Dana Berhasil!', 'success');
         setIsWithdrawOpen(false);
         setWithdrawAmount('');
         setWithdrawLoading(false);
-    }, 1500);
+    }, 1000);
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+          const objectUrl = URL.createObjectURL(file);
+          setNewService({ ...newService, imageUrl: objectUrl });
+      }
   };
 
   const handleSaveService = () => {
@@ -67,15 +91,26 @@ const FreelancerDashboard = () => {
           showToast('Mohon lengkapi data jasa', 'error');
           return;
       }
-      // Mock save
+      
+      const serviceObj = {
+          id: Math.random().toString(36).substr(2, 9),
+          freelancerId: user?.id || '',
+          freelancerName: user?.name || '',
+          rating: 0,
+          reviewCount: 0,
+          ...newService,
+          price: parseInt(newService.price),
+          imageUrl: newService.imageUrl || 'https://picsum.photos/400/300?random=99' // Fallback if no image
+      };
+
+      setMyServices([...myServices, serviceObj]);
       showToast('Jasa berhasil ditambahkan!', 'success');
       setIsAddServiceOpen(false);
-      setNewService({ title: '', category: 'Academic', price: '', description: '' });
+      setNewService({ title: '', category: 'Academic', price: '', description: '', imageUrl: '' });
   };
 
   const handleUpdateService = () => {
       if (!editServiceData) return;
-      // Mock update logic
       setMyServices(prev => prev.map(s => s.id === editServiceData.id ? editServiceData : s));
       showToast('Jasa berhasil diperbarui!', 'success');
       setEditServiceData(null);
@@ -120,13 +155,13 @@ const FreelancerDashboard = () => {
         />
         <StatCard 
           title="Rating Rata-rata" 
-          value="4.8 / 5.0" 
+          value="5.0 / 5.0" 
           icon={Star} 
           color="bg-secondary shadow-yellow-200 shadow-lg" 
         />
         <StatCard 
           title="Proyek Selesai" 
-          value="24" 
+          value="0" 
           icon={Briefcase} 
           color="bg-primary shadow-red-200 shadow-lg" 
         />
@@ -139,20 +174,8 @@ const FreelancerDashboard = () => {
                 <TrendingUp className="w-5 h-5 mr-2 text-primary" />
                 Pendapatan Mingguan
             </h3>
-            <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={earningsData} margin={{top: 10, right: 10, left: -20, bottom: 0}}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 12}} tickFormatter={(value) => `${value/1000}k`} />
-                <Tooltip 
-                    cursor={{fill: '#F9FAFB'}}
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
-                    formatter={(value: number) => [`Rp ${value.toLocaleString()}`, 'Pendapatan']}
-                />
-                <Bar dataKey="income" fill="#800000" radius={[6, 6, 0, 0]} barSize={40} />
-                </BarChart>
-            </ResponsiveContainer>
+            <div className="h-72 w-full flex items-center justify-center bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                 <p className="text-gray-400 text-sm">Belum ada data pendapatan minggu ini</p>
             </div>
         </div>
 
@@ -164,7 +187,7 @@ const FreelancerDashboard = () => {
                     <div key={service.id} className="p-3 border border-gray-100 rounded-lg hover:border-primary/30 transition-colors">
                         <div className="flex gap-3">
                             <div className="w-16 h-16 bg-gray-100 rounded-md overflow-hidden shrink-0">
-                                <img src={service.imageUrl} className="w-full h-full object-cover" />
+                                <img src={service.imageUrl} className="w-full h-full object-cover" alt="Service" />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <h4 className="font-bold text-gray-900 text-sm truncate">{service.title}</h4>
@@ -194,7 +217,7 @@ const FreelancerDashboard = () => {
         footer={
             <div className="w-full flex gap-3">
                 <Button variant="outline" onClick={() => setIsWithdrawOpen(false)} fullWidth>Batal</Button>
-                <Button onClick={handleWithdraw} isLoading={withdrawLoading} fullWidth>Request Withdrawal</Button>
+                <Button onClick={handleWithdraw} isLoading={withdrawLoading} fullWidth>Konfirmasi Penarikan</Button>
             </div>
         }
       >
@@ -284,13 +307,36 @@ const FreelancerDashboard = () => {
                 
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Foto / Portofolio</label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-gray-50 transition-colors cursor-pointer">
-                        <div className="w-10 h-10 bg-red-50 text-primary rounded-full flex items-center justify-center mx-auto mb-2">
-                            <Upload className="w-5 h-5" />
+                    
+                    {!newService.imageUrl ? (
+                        <div 
+                            onClick={() => fileInputRef.current?.click()}
+                            className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-gray-50 transition-colors cursor-pointer h-32 flex flex-col items-center justify-center"
+                        >
+                            <div className="w-10 h-10 bg-red-50 text-primary rounded-full flex items-center justify-center mx-auto mb-2">
+                                <Upload className="w-5 h-5" />
+                            </div>
+                            <p className="text-sm font-medium text-gray-900">Klik untuk upload gambar</p>
+                            <p className="text-xs text-gray-500">PNG, JPG</p>
                         </div>
-                        <p className="text-sm font-medium text-gray-900">Klik untuk upload gambar</p>
-                        <p className="text-xs text-gray-500">PNG, JPG up to 5MB</p>
-                    </div>
+                    ) : (
+                        <div className="relative h-32 rounded-xl overflow-hidden border border-gray-200 group">
+                            <img src={newService.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                            <button 
+                                onClick={() => setNewService({...newService, imageUrl: ''})}
+                                className="absolute top-2 right-2 bg-white/80 p-1 rounded-full text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
+                    <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        className="hidden" 
+                        accept="image/*" 
+                        onChange={handleImageUpload} 
+                    />
                 </div>
             </div>
         </div>

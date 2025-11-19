@@ -1,27 +1,22 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../App';
 import { Button, Input } from '../components/UI';
-import { Camera, Mail, User as UserIcon, Shield, Edit2, LogOut, History, CreditCard, ChevronRight } from 'lucide-react';
+import { Camera, Mail, User as UserIcon, Shield, Edit2, LogOut, History, CreditCard } from 'lucide-react';
 
 const Profile = () => {
-  const { user, updateUser, showToast, logout } = useApp();
+  const { user, activeRole, updateUser, showToast, logout } = useApp();
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(user?.name || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [history, setHistory] = useState<any[]>([]);
 
-  // Feature 19: Mock Activity History
-  const activities = [
-      { id: 1, action: 'Booking Confirmed', detail: 'Les Privat Kalkulus', date: '2 jam yang lalu' },
-      { id: 2, action: 'Withdrawal Requested', detail: 'Rp 150.000 to BCA', date: '1 hari yang lalu' },
-      { id: 3, action: 'Profile Updated', detail: 'Changed profile picture', date: '3 hari yang lalu' },
-  ];
-
-  // Feature 17: Mock Transactions
-  const transactions = [
-      { id: 'TRX-001', desc: 'Payment for Design Logo', amount: -50000, date: '25 Oct 2023', status: 'Success' },
-      { id: 'TRX-002', desc: 'Withdrawal to BCA', amount: -150000, date: '20 Oct 2023', status: 'Pending' },
-      { id: 'TRX-003', desc: 'Payment for Install OS', amount: -75000, date: '15 Oct 2023', status: 'Success' },
-  ];
+  // Load history from localStorage (populated by Withdrawals, etc)
+  useEffect(() => {
+      const storedHistory = localStorage.getItem('campuswork_history');
+      if (storedHistory) {
+          setHistory(JSON.parse(storedHistory));
+      }
+  }, []);
 
   if (!user) return null;
 
@@ -131,6 +126,14 @@ const Profile = () => {
                                         <p className="font-bold text-sm">{user.role}</p>
                                     </div>
                                 </div>
+                                {user.role === 'BOTH' && (
+                                    <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100 text-blue-700 w-fit">
+                                        <div>
+                                            <p className="text-xs uppercase font-bold tracking-wide text-blue-900">Current View</p>
+                                            <p className="font-bold text-sm">{activeRole}</p>
+                                        </div>
+                                    </div>
+                                )}
                              </div>
                         </div>
                 </div>
@@ -138,45 +141,37 @@ const Profile = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Transaction History */}
+            {/* Transaction History (Real Data from LocalStorage) */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
                     <CreditCard className="w-5 h-5 mr-2 text-primary" /> Riwayat Transaksi
                 </h3>
                 <div className="space-y-4">
-                    {transactions.map(trx => (
-                        <div key={trx.id} className="flex justify-between items-start pb-3 border-b border-gray-50 last:border-0 last:pb-0">
+                    {history.length > 0 ? (
+                        history.map((trx, index) => (
+                        <div key={index} className="flex justify-between items-start pb-3 border-b border-gray-50 last:border-0 last:pb-0">
                             <div>
-                                <p className="text-sm font-medium text-gray-900">{trx.desc}</p>
+                                <p className="text-sm font-medium text-gray-900">{trx.action}</p>
                                 <p className="text-xs text-gray-500">{trx.date} • {trx.status}</p>
                             </div>
                             <span className={`text-sm font-bold ${trx.amount < 0 ? 'text-red-600' : 'text-green-600'}`}>
                                 {trx.amount < 0 ? '-' : '+'}Rp {Math.abs(trx.amount).toLocaleString()}
                             </span>
                         </div>
-                    ))}
-                    <button className="w-full text-center text-sm text-primary font-medium hover:underline pt-2">Lihat Semua</button>
+                        ))
+                    ) : (
+                        <p className="text-sm text-gray-400 text-center py-4">Belum ada riwayat transaksi.</p>
+                    )}
                 </div>
             </div>
 
-            {/* Activity History */}
+            {/* Activity History - Placeholder for now since we don't track everything perfectly */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
                     <History className="w-5 h-5 mr-2 text-primary" /> Aktivitas Terbaru
                 </h3>
                 <div className="space-y-4 relative">
-                     {/* Timeline line */}
-                     <div className="absolute left-2.5 top-2 bottom-2 w-0.5 bg-gray-100"></div>
-                    {activities.map(act => (
-                        <div key={act.id} className="flex items-start relative z-10">
-                            <div className="w-5 h-5 bg-white border-2 border-gray-200 rounded-full mt-0.5 mr-3 shrink-0"></div>
-                            <div>
-                                <p className="text-sm font-medium text-gray-900">{act.action}</p>
-                                <p className="text-xs text-gray-500">{act.detail}</p>
-                                <p className="text-[10px] text-gray-400 mt-1">{act.date}</p>
-                            </div>
-                        </div>
-                    ))}
+                     <p className="text-sm text-gray-400 text-center py-4">Belum ada aktivitas tercatat.</p>
                 </div>
             </div>
         </div>

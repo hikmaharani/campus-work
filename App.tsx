@@ -21,9 +21,11 @@ import HowItWorks from './pages/HowItWorks';
 // --- Context ---
 interface AppContextType {
   user: User | null;
+  activeRole: Role; // The role currently being viewed (for BOTH users)
   login: (user: User) => void;
   logout: () => void;
   updateUser: (user: Partial<User>) => void;
+  switchRole: () => void; // Function to toggle role
   showToast: (message: string, type: 'success' | 'error' | 'info') => void;
   notifications: Notification[];
   addNotification: (n: Omit<Notification, 'id' | 'date' | 'isRead'>) => void;
@@ -41,6 +43,7 @@ export const useApp = () => {
 
 const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [activeRole, setActiveRole] = useState<Role>(Role.NONE);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
 
@@ -48,17 +51,31 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   useEffect(() => {
     const storedUser = localStorage.getItem('campusgig_user');
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+      // Set initial active role based on user role
+      if (parsedUser.role === Role.BOTH) {
+          setActiveRole(Role.CLIENT); // Default to Client view
+      } else {
+          setActiveRole(parsedUser.role);
+      }
     }
   }, []);
 
   const login = (userData: User) => {
     setUser(userData);
+    // Set active role immediately upon login
+    if (userData.role === Role.BOTH) {
+        setActiveRole(Role.CLIENT);
+    } else {
+        setActiveRole(userData.role);
+    }
     localStorage.setItem('campusgig_user', JSON.stringify(userData));
   };
 
   const logout = () => {
     setUser(null);
+    setActiveRole(Role.NONE);
     localStorage.removeItem('campusgig_user');
   };
 
@@ -66,7 +83,20 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     if (!user) return;
     const updated = { ...user, ...updates };
     setUser(updated);
+    
+    // If role changed to BOTH, set active to Client if it was NONE
+    if (updates.role && updates.role === Role.BOTH) {
+        setActiveRole(Role.CLIENT);
+    } else if (updates.role) {
+        setActiveRole(updates.role);
+    }
+
     localStorage.setItem('campusgig_user', JSON.stringify(updated));
+  };
+
+  const switchRole = () => {
+      if (user?.role !== Role.BOTH) return;
+      setActiveRole(prev => prev === Role.CLIENT ? Role.FREELANCER : Role.CLIENT);
   };
 
   const showToast = (message: string, type: 'success' | 'error' | 'info') => {
@@ -84,7 +114,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const addNotification = (n: Omit<Notification, 'id' | 'date' | 'isRead'>) => {
     const newNotif: Notification = {
       id: Math.random().toString(36).substring(7),
-      date: 'Just now',
+      date: 'Baru saja',
       isRead: false,
       ...n
     };
@@ -100,7 +130,7 @@ const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   return (
-    <AppContext.Provider value={{ user, login, logout, updateUser, showToast, notifications, addNotification, markAsRead, markAllAsRead }}>
+    <AppContext.Provider value={{ user, activeRole, login, logout, updateUser, switchRole, showToast, notifications, addNotification, markAsRead, markAllAsRead }}>
       {children}
       <ToastContainer toasts={toasts} removeToast={removeToast} />
     </AppContext.Provider>
@@ -115,7 +145,6 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   return <Layout>{children}</Layout>;
 };
 
-// New Guard for routes that are public but look different if logged in
 const PublicOrPrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return <Layout>{children}</Layout>;
 };
@@ -136,7 +165,7 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 // --- Main App ---
 const AppContent = () => {
-  const { user } = useApp();
+  const { user, activeRole } = useApp();
 
   return (
     <Routes>
@@ -148,7 +177,8 @@ const AppContent = () => {
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="/dashboard" element={
         <PublicOrPrivateRoute>
-            {user?.role === Role.FREELANCER ? <FreelancerDashboard /> : <ClientDashboard />}
+            {/* Render based on Active Role, not just static User Role */}
+            {activeRole === Role.FREELANCER ? <FreelancerDashboard /> : <ClientDashboard />}
         </PublicOrPrivateRoute>
       } />
       <Route path="/service/:id" element={<PublicOrPrivateRoute><ServiceDetail /></PublicOrPrivateRoute>} />
