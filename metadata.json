@@ -1,0 +1,7 @@
+{
+  "name": "CampusWork - Student Marketplace",
+  "description": "A trustworthy marketplace for students to find and offer academic, creative, and technical services.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
