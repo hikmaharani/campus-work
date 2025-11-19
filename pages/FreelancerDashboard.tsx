@@ -2,7 +2,6 @@ import React, { useState, useRef } from 'react';
 import { useApp } from '../App';
 import { Button, Modal, Input } from '../components/UI';
 import { Plus, DollarSign, Star, Briefcase, TrendingUp, AlertCircle, Upload, Check, Edit3, Trash2, X } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { MOCK_SERVICES } from '../constants';
 
 const FreelancerDashboard = () => {
@@ -19,17 +18,6 @@ const FreelancerDashboard = () => {
   // Add Service States
   const [newService, setNewService] = useState({ title: '', category: 'Academic', price: '', description: '', imageUrl: '' });
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Mock Data for Charts (Static visualization only, but values are 0 if no real data)
-  const earningsData = [
-    { name: 'Sn', income: 0 },
-    { name: 'Sl', income: 0 },
-    { name: 'Rb', income: 0 },
-    { name: 'Km', income: 0 },
-    { name: 'Jm', income: 0 },
-    { name: 'Sb', income: 0 },
-    { name: 'Mg', income: 0 },
-  ];
 
   const handleWithdraw = () => {
     const amount = parseInt(withdrawAmount);

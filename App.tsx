@@ -1,5 +1,5 @@
 import React, { useState, createContext, useContext, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Role, User, Notification } from './types';
 import { ToastContainer, ToastMessage } from './components/UI';
 import { Layout } from './components/Layout';
@@ -165,7 +165,7 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 // --- Main App ---
 const AppContent = () => {
-  const { user, activeRole } = useApp();
+  const { activeRole } = useApp();
 
   return (
     <Routes>
