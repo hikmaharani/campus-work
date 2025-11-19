@@ -29,13 +29,12 @@
       }
     </script>
 
-    <!-- Import Map: Consolidate all React deps to 18.2.0 via esm.sh with deps pinning -->
+    <!-- Import Map: STRICTLY use esm.sh for all React dependencies to avoid version conflicts (Error #31) -->
     <script type="importmap">
 {
   "imports": {
     "react": "https://esm.sh/react@18.2.0",
     "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime",
-    "react-dom": "https://esm.sh/react-dom@18.2.0?deps=react@18.2.0",
     "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?deps=react@18.2.0",
     "react-router-dom": "https://esm.sh/react-router-dom@6.22.3?deps=react@18.2.0,react-dom@18.2.0",
     "lucide-react": "https://esm.sh/lucide-react@0.363.0?deps=react@18.2.0",
