@@ -38,8 +38,12 @@ export interface Booking {
   id: string;
   serviceId: string;
   serviceTitle: string;
+  clientId: string;      // Who ordered
+  freelancerId: string;  // Who performs
   freelancerName: string;
-  date: string;
+  clientName?: string;   // Optional for display
+  date: string;          // Booking creation date
+  deadline: string;      // Due date
   status: BookingStatus;
   price: number;
 }

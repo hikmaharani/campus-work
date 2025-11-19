@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Star, ArrowLeft, CheckCircle, ShieldCheck, MessageSquare, MapPin, Share2, Heart, Lock } from 'lucide-react';
-import { Button, Badge, Modal } from '../components/UI';
-import { MOCK_SERVICES } from '../constants';
-import { Service, ChatThread } from '../types';
+import { Star, ArrowLeft, CheckCircle, ShieldCheck, MessageSquare, MapPin, Share2, Heart, Lock, Calendar } from 'lucide-react';
+import { Button, Badge, Input } from '../components/UI';
+import { MOCK_SERVICES, MOCK_BOOKINGS } from '../constants';
+import { Service, ChatThread, Booking, BookingStatus } from '../types';
 import { useApp } from '../App';
 
 const ServiceDetail = () => {
@@ -14,6 +14,7 @@ const ServiceDetail = () => {
   const [service, setService] = useState<Service | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [deadline, setDeadline] = useState('');
 
   useEffect(() => {
     setIsLoading(true);
@@ -35,12 +36,51 @@ const ServiceDetail = () => {
           return;
       }
 
-      if (action === 'booking') {
+      if (action === 'booking' && service) {
+        if (!deadline) {
+            showToast('Harap tentukan tanggal deadline pesanan.', 'error');
+            return;
+        }
+
+        // 1. Create new Booking Object
+        const newBooking: Booking = {
+            id: 'B-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+            serviceId: service.id,
+            serviceTitle: service.title,
+            freelancerId: service.freelancerId,
+            freelancerName: service.freelancerName,
+            clientId: user.id,
+            clientName: user.name,
+            date: new Date().toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' }).split('/').reverse().join('-'),
+            deadline: deadline,
+            status: BookingStatus.PENDING,
+            price: service.price
+        };
+
+        // 2. Get existing bookings from DB or Initialize with Mocks if empty
+        const storedBookingsStr = localStorage.getItem('campuswork_db_bookings');
+        let currentBookings: Booking[] = [];
+
+        if (storedBookingsStr) {
+            currentBookings = JSON.parse(storedBookingsStr);
+        } else {
+            // If first time, seed with MOCK data so the list isn't empty
+            currentBookings = [...MOCK_BOOKINGS];
+        }
+
+        // 3. Add new booking to the list
+        currentBookings.unshift(newBooking); // Add to top
+
+        // 4. Save back to localStorage
+        localStorage.setItem('campuswork_db_bookings', JSON.stringify(currentBookings));
+
         showToast('Permintaan booking terkirim! Cek status di menu Bookings.', 'success');
+        
         setTimeout(() => {
             navigate('/bookings');
         }, 1000);
-      } else {
+
+      } else if (action === 'chat') {
           handleChatInitiation();
       }
   };
@@ -220,9 +260,21 @@ const ServiceDetail = () => {
             </div>
 
             <div className="space-y-4 mb-8">
+                {/* Deadline Picker */}
+                <div>
+                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tenggat Waktu (Deadline)</label>
+                     <Input 
+                        type="date"
+                        value={deadline}
+                        onChange={(e) => setDeadline(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                        className="bg-gray-50"
+                     />
+                </div>
+
                 <div className="flex items-center justify-between text-sm text-gray-600">
                     <span className="flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-2" />Waktu Pengerjaan</span>
-                    <span className="font-semibold text-gray-900">1-3 Hari</span>
+                    <span className="font-semibold text-gray-900">Sesuai Deadline</span>
                 </div>
                  <div className="flex items-center justify-between text-sm text-gray-600">
                     <span className="flex items-center"><CheckCircle className="w-4 h-4 text-green-500 mr-2" />Revisi</span>

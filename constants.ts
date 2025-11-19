@@ -51,13 +51,18 @@ export const MOCK_SERVICES: Service[] = [
   }
 ];
 
+// Updated MOCK_BOOKINGS to align with new types (clientId, deadline)
 export const MOCK_BOOKINGS: Booking[] = [
   {
     id: 'b1',
     serviceId: '1',
     serviceTitle: 'Les Privat Kalkulus',
     freelancerName: 'Sarah J.',
+    freelancerId: 'f1',
+    clientId: 'me', // Assuming 'me' is the logged in user id for demo
+    clientName: 'Me',
     date: '2023-10-25',
+    deadline: '2023-10-30',
     status: BookingStatus.PENDING,
     price: 50000
   },
@@ -66,7 +71,11 @@ export const MOCK_BOOKINGS: Booking[] = [
     serviceId: '3',
     serviceTitle: 'Desain Poster',
     freelancerName: 'Ani Design',
+    freelancerId: 'f3',
+    clientId: 'me',
+    clientName: 'Me',
     date: '2023-10-20',
+    deadline: '2023-10-22',
     status: BookingStatus.COMPLETED,
     price: 35000
   },
@@ -75,7 +84,11 @@ export const MOCK_BOOKINGS: Booking[] = [
     serviceId: '2',
     serviceTitle: 'Install Ulang Laptop',
     freelancerName: 'Dimas Tech',
+    freelancerId: 'f2',
+    clientId: 'me',
+    clientName: 'Me',
     date: '2023-10-15',
+    deadline: '2023-10-16',
     status: BookingStatus.CANCELLED,
     price: 75000
   }
